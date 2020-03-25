@@ -1,0 +1,193 @@
+---
+title: "Sara Nunes Examen 1"
+author: "Sara Nunes"
+date: "26 de abril de 2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(dplyr)
+library(pracma)
+library(datasets)
+library(tidyverse)
+library(arules)
+library(arulesViz)
+library(limSolve)
+```
+# 1)
+
+## a
+
+```{r}
+data("mtcars")
+```
+
+
+## b y c y d
+
+```{r}
+v1 <- colnames(mtcars)
+v1[length(v1)] <- "num.carb"
+colnames(mtcars) <- v1
+```
+## e
+
+```{r}
+list.mpdollar <- list(mpdollar=mtcars$mpg *2.70)
+
+mtcars <- cbind(mtcars, list.mpdollar )
+```
+
+
+## f
+
+```{r}
+
+mtcars <- cbind( mtcars, names=rownames(mtcars))
+cil4mpg22a29 <-  filter(mtcars, cyl==4 & (mpg>=22 | mpg<= 39))
+cil4mpg22a29 <- arrange(cil4mpg22a29, desc(names))
+cil4mpg22a29 <- select(cil4mpg22a29 , names, everything())
+cil4mpg22a29
+```
+## g
+
+```{r}
+noRepes <- list(carb= unique(mtcars$num.carb), gear= unique(mtcars$gear), vs=unique(mtcars$vs)  )
+noRepes
+```
+## h
+```{r}
+mtcars <- select(mtcars, everything() , -c(names))
+mtcars.h <- select(mtcars, (ncol(mtcars) : (ncol(mtcars)-2)),  everything())
+mtcars.h <-  select(mtcars.h, -c(wt))
+mtcars.h
+```
+## i
+```{r}
+m1 <- head(mtcars.h);m1
+m2 <- tail(mtcars.h);m2
+m12 <- rbind(m1,m2);m12
+```
+
+# 2
+## a
+```{r}
+data("iris")
+```
+## b
+```{r}
+gp <-  ggplot(iris , aes(x= Sepal.Length, y= Sepal.Width))
+gp + geom_point()
+gp + geom_point() + geom_line() + labs(x= "Length", y= "Width") + geom_smooth()
+gp + geom_point(aes(shape = Species , color = Petal.Width ))
+```
+## c
+```{r}
+gp + geom_line() + facet_wrap(~Petal.Width)
+```
+
+## d
+```{r}
+iris$Sepal.Length <- cut(iris$Sepal.Length ,c(4,5,6,8),labels=c("pequeño","mediano", "grande"))
+iris$Sepal.Width <- cut(iris$Sepal.Width, c(2,3,4,5) , labels=c("pequeño", "mediano", "grande"))
+iris$Petal.Length <- cut(iris$Petal.Length , c(1,3,5,7), labels=c("pequeño", "mediano", "grande")) 
+iris$Petal.Width <- cut(iris$Petal.Width, c(0,1,2,3) , labels= c("pequeño", "mediano","grande"))
+
+Regl1 <- apriori(iris, parameter = list( supp=0.1, conf=0.1))
+Regl1
+```
+## e
+```{r}
+Regl2<- apriori(iris, parameter = list(minlen= 2, supp=0.05, conf=0.05))
+Regl2      
+```
+
+## f
+
+```{r}
+summary(Regl1)
+summary(Regl2)
+```
+## g
+
+Las reglas más interesantes son las que tienen el lift o confidence más alto.Muestro con un head para ver las primeras con mayor lift.
+```{r}
+Regl1 <- sort(Regl1, by= "lift")
+inspect(head(Regl1))
+```
+## h
+```{r}
+Regl3 <- union(Regl1, Regl2);Regl3
+Regl3 <- unique(Regl3)
+Regl3
+```
+## i
+```{r}
+Regl3.noRedun <- Regl3[!is.redundant(Regl3)]; Regl3.noRedun
+```
+
+## j
+
+```{r}
+Regl1.significant <- Regl1[is.significant(Regl1,iris)]
+Regl1.significant
+inspect(Regl1.significant)
+```
+
+
+# 3
+
+## a
+
+```{r}
+n <- 100
+minusOnes <- vector()
+minusOnes[1: n-1] <- -1 
+M <- matrix(0, 100,100)
+diagPrin <- c((1:n)*4)
+M <-M +Diag( diagPrin) +Diag(minusOnes,1)+Diag(minusOnes,-1)
+
+b <- matrix(7,n,1)
+b[1] <- 1
+b[n] <- 2
+
+```
+## b
+```{r}
+x.qr <- qr.solve(M,b)
+x.qr
+```
+
+## c
+
+```{r}
+x.jac <- itersolve(M,b,method=c("Jacobi"))
+x.jac
+
+residuo <- M%*% x.jac$x - b
+norm(residuo,"1")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

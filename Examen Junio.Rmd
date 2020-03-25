@@ -1,0 +1,199 @@
+---
+title: "ExamenJunio"
+author: "Sara Nunes"
+date: "7 de junio de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(ggplot2)
+library(stats)
+library(readxl)
+library(dplyr)
+library(igraph)
+library(igraphdata)
+library(pracma)
+library(limSolve)
+library(Matrix)
+```
+
+# Ejercicio 1
+
+```{r , eval=FALSE}
+
+dataset <- read_excel("fitting1.xls")
+attach(fitting1)
+plot(fitting1)
+
+ # Las transparencias me aparecían mal
+m1 <- lm(X~ Y + I(Y^2) + I(Y^3) + I(Y^4) + I(Y^5),data = fitting1);summary(m1)
+
+plot(X,Y)
+par(new =TRUE)
+plot(X,fitted(m1), col="red")
+
+
+#No se si es esto
+plot(X,residuals(m1))
+par(new=TRUE)
+plot(X,fitted(m1),col ="red")
+#O esto lo que pide el enunciado
+plot(residuals(m1),fitted(m1))
+
+plot(m1)
+
+
+```
+Los puntos que más leverage tienen son los outliers en el plot de Residuals vs Leverage pero no me da tiempo a terminar el ej.
+
+# Ejercicio 2
+```{r}
+
+landdata_states <- read_csv("landdata-states.csv")
+ldkmeans <- kmeans(landdata_states[,c("Home.Value","Land.Value")],center=4)
+
+ldkmeans
+
+
+
+Gr1 <- order(ldkmeans$cluster)
+
+
+df1 <- data.frame(State=landdata_states[Gr1,c("State")], Cluster=ldkmeans$cluster[Gr1])
+rownames(df1) <- 1:dim(df1)[1]
+df1
+
+
+
+
+
+mat_dis_euc <- dist(landdata_states[, c("Home.Value","Land.Value")], method = "euclidean" )
+
+hclus.eu.ward.D <- hclust(mat_dis_euc,method="ward.D")
+hclus.eu.ward.D2 <- hclust(mat_dis_euc,method="ward.D2")
+
+plot(hclus.eu.ward.D, main="euc WardD")
+rect.hclust(hclus.eu.ward.D, k=4)
+plot(hclus.eu.ward.D2, main="euc WardD2")
+rect.hclust(hclus.eu.ward.D2, k=4)
+
+
+mat_dis_euc <- dist(landdata_states[landdata_states$State == "AK" || landdata_states$State == "DC", c("Home.Value","Land.Value")], method = "euclidean" )
+
+hclus.eu.ward.D <- hclust(mat_dis_euc,method="ward.D")
+hclus.eu.ward.D2 <- hclust(mat_dis_euc,method="ward.D2")
+
+plot(hclus.eu.ward.D, main="euc WardD")
+rect.hclust(hclus.eu.ward.D, k=4)
+plot(hclus.eu.ward.D2, main="euc WardD2")
+rect.hclust(hclus.eu.ward.D2, k=4)
+
+```
+
+
+# Ejercicio 3
+## 1)
+```{r}
+Matriz <- matrix(rbinom(400,1,0.25), nrow = 20)
+
+mis.amigos <- graph_from_adjacency_matrix(Matriz)
+
+plot(mis.amigos)
+
+length(V(graph))
+```
+## 2)
+
+```{r}
+mis.amigos <- delete.vertices(mis.amigos,20)# Lo elimina del plot pero no de V(graph)siguen saliendo 20
+
+length(V(graph))
+
+n <- length(V(graph))-1;n
+```
+
+## 3,4)
+```{r}
+egg2 <- ego(mis.amigos, order = 2, nodes = V(mis.amigos), mode = "all", mindist = 0)
+egg2
+
+
+egg6 <- ego(mis.amigos, order = 6, nodes = V(mis.amigos), mode = "all", mindist = 0)
+egg6
+```
+## 5)
+```{r}
+
+rs <- rowSums(Matriz);rs
+order(rs, decreasing=T)[1:5]
+
+egg6 <- ego(mis.amigos, order = 1, nodes = 1, mode = "all", mindist = 0)
+egg6
+
+
+path1 <- shortest_paths(mis.amigos, from = 1,to=n,mode ="all", output = "both");path1
+
+
+mis.amigos <-  add.vertices(mis.amigos, 1, name="Ultimo") #HACE NULL EL RESTO DE VERTICES
+
+
+mis.amigos <- add_edges(mis.amigos, c(20,2, 20,3 , 20,4, 20,5))
+
+plot(mis.amigos)
+
+pr <- page.rank(mis.amigos);pr
+#Es el número:
+order(pr$vector,decreasing=T) [1]
+
+```
+# Ejercicio 4
+
+```{r}
+n <- 100
+
+M <- Matrix(0,nrow=n,ncol=n,sparse=T)
+
+M <- M +Diag(rep(125,n)) +Diag(rep(-1,n-1),1) + Diag(rep(2,n-2),2)
+M[1,45] <- n
+M[2,34] <- n
+M[3,67] <- n
+M[4,12] <- n
+
+b=Matrix(1,ncol=1,nrow= 100)
+b[1,1] <- 3
+b[n,1] <- -2
+
+x <- solve(M,b)
+residuo <- M%*%x -b
+norm(residuo,"1")
+
+
+xQr <- qr.solve(M,b)
+residuoQr <- M%*%xQr -b
+norm(residuoQr,"1")
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
